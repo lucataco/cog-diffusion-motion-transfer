@@ -1,0 +1,28 @@
+# Configuration for Cog ⚙️
+# Reference: https://github.com/replicate/cog/blob/main/docs/yaml.md
+build:
+  gpu: true
+  cuda: "11.8"
+  system_packages:
+    - "libgl1-mesa-glx"
+    - "libglib2.0-0"
+    - "ffmpeg"
+  python_version: "3.9"
+  python_packages:
+    - "torch==2.0.1"
+    - "torchvision"
+    - "diffusers==0.20.1"
+    - "pillow==10.0.1"
+    - "omegaconf==2.3.0"
+    - "transformers==4.36.1"
+    - "einops==0.7.0"
+    - "tqdm==4.66.1"
+    - "opencv-python==4.8.1.78"
+    - "accelerate==0.25.0"
+    - "imageio==2.33.1"
+    - "imageio-ffmpeg==0.4.9"
+    - "timm==0.9.12"
+    - "av==11.0.0"
+
+# predict.py defines how predictions are run on your model
+predict: "predict.py:Predictor"
