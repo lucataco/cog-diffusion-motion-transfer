@@ -4,12 +4,14 @@
 from cog import BasePredictor, Input, Path
 import os
 import yaml
+import torch
 import subprocess
+from diffusers import DDIMScheduler, VideoToVideoSDPipeline
 
 class Predictor(BasePredictor):
     def setup(self) -> None:
         """Load the model into memory to make running multiple predictions efficient"""
-        # self.model = torch.load("./weights.pth")
+        model = VideoToVideoSDPipeline.from_pretrained("cerspense/zeroscope_v2_576w", torch_dtype=torch.float16)
         os.chdir("motion")
 
     def predict(
@@ -19,6 +21,10 @@ class Predictor(BasePredictor):
             description="Prompt used to describe the input video",
             default="Amazing quality, masterpiece, A locomotive rides in a forest",
         ),
+        n_timesteps: int = Input(
+            description="Number of times to preprocess the video",
+            default=999,
+        ),
         target_prompt: str = Input(
             description="Prompt used to describe the output video",
             default="Amazing quality, masterpiece, A motorbike driving in a forest",
@@ -27,8 +33,15 @@ class Predictor(BasePredictor):
             description="Negative prompt to use for editing",
             default="bad quality, distortions, unrealistic, distorted image, watermark, signature"
         ),
+        seed: int = Input(
+            description="Random seed. Leave blank to randomize the seed", default=None
+        ),
     ) -> Path:
         """Run a single prediction on the model"""
+        if seed is None:
+            seed = int.from_bytes(os.urandom(4), "big")
+        print(f"Using seed: {seed}")
+
         # Clear tmp input & output images folder
         input_path = "data/input"
         # os.system("rm -rf " + input_path)
@@ -44,7 +57,7 @@ class Predictor(BasePredictor):
 save_dir: {latent_path}
 max_number_of_frames: 24
 
-n_timesteps: 999
+n_timesteps: {n_timesteps}
 prompt: {video_prompt}
 negative_prompt: ""
 save_ddim_reconstruction: False
@@ -68,6 +81,7 @@ save_ddim_reconstruction: False
         config['source_prompt'] = video_prompt
         config['target_prompt'] = target_prompt
         config['negative_prompt'] = negative_prompt
+        config['seed'] = seed
         # Write the modified configuration back to the YAML file
         with open('configs/guidance.yaml', 'w') as f:
             yaml.dump(config, f)
